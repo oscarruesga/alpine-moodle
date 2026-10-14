@@ -14,7 +14,8 @@ USER root
 ARG PHP_VERSION=84
 RUN case "$PHP_VERSION" in 83|84) ;; *) echo 'Unsupported PHP runtime' >&2; exit 1 ;; esac \
     && apk add --no-cache composer patch rsync php${PHP_VERSION}-posix php${PHP_VERSION}-xmlwriter php${PHP_VERSION}-pecl-redis \
-    php${PHP_VERSION}-ldap php${PHP_VERSION}-pecl-igbinary php${PHP_VERSION}-exif php${PHP_VERSION}-sqlite3 php${PHP_VERSION}-pdo_sqlite \
+  php${PHP_VERSION}-ldap php${PHP_VERSION}-pecl-igbinary php${PHP_VERSION}-exif php${PHP_VERSION}-sqlite3 php${PHP_VERSION}-pdo_sqlite \
+  php${PHP_VERSION}-opcache \
     # php83-zip provides ZipArchive, used by the Moodle blueprint runner for
     # safe bundle/plugin extraction.
     php${PHP_VERSION}-zip \
@@ -134,6 +135,12 @@ RUN MOODLE_DIR=/usr/src/moodle sh /tmp/apply-sqlite-support.sh "$MOODLE_VERSION"
 
 USER root
 COPY --chown=nobody rootfs/ /
+RUN printf '%s\n' \
+  'opcache.enable=1' \
+  'opcache.enable_cli=0' \
+  'opcache.validate_timestamps=0' \
+  'opcache.revalidate_freq=0' \
+  > "/etc/php${PHP_VERSION}/conf.d/zz-opcache.ini"
 
 USER nobody
 
